@@ -1,0 +1,578 @@
+<div id="UltimateStrmConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-button,emby-input">
+<div data-role="content">
+<div class="content-primary">
+
+<h2 class="usPageTitle">Ultimate STRM</h2>
+<p class="usDescription">Strm Manager · yt2strm · Custom Iframe · Quick STRM — one plugin, one database</p>
+
+<!-- ── Tab bar ── -->
+<div class="usTabBar">
+    <button class="usTab active" data-tab="strm">Strm Manager</button>
+    <button class="usTab" data-tab="yt2strm">yt2strm</button>
+    <button class="usTab" data-tab="iframe">Custom Iframe</button>
+    <button class="usTab" data-tab="quick">Quick STRM</button>
+    <button class="usTab" data-tab="log">Activity Log</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 1 — Strm Manager
+═══════════════════════════════════════════════ -->
+<div class="usPanel" id="panel-strm">
+    <div class="usCard">
+        <h3>Add .strm File(s)</h3>
+        <div id="strmRowsContainer"></div>
+        <div style="margin:12px 0;">
+            <button type="button" is="emby-button" class="usBtn" id="strmAddRowBtn">+ Add Another Row</button>
+        </div>
+        <div style="margin-top:8px;">
+            <button type="button" is="emby-button" class="usBtn usBtnPrimary" id="strmSaveBtn">Save</button>
+            <button type="button" is="emby-button" class="usBtn usBtnDanger" id="strmCancelBtn" style="display:none;margin-left:8px;">Cancel Edit</button>
+        </div>
+        <div id="strmMsg" class="usMsg" style="display:none;"></div>
+    </div>
+
+    <div class="usCard" style="margin-top:20px;">
+        <h3>Managed Files</h3>
+        <table class="usTable" id="strmTable">
+            <thead><tr><th>Title</th><th>File Path</th><th>Content URL</th><th></th></tr></thead>
+            <tbody id="strmTbody"></tbody>
+        </table>
+        <div id="strmEmpty" class="usEmpty" style="display:none;">No .strm files added yet.</div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 2 — yt2strm
+═══════════════════════════════════════════════ -->
+<div class="usPanel" id="panel-yt2strm" style="display:none;">
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px;">
+        <div class="usStat" style="border-color:#00a4dc;"><div class="usStatNum" id="ytTotal" style="color:#00a4dc;">-</div><div class="usStatLbl">Total</div></div>
+        <div class="usStat" style="border-color:#4caf50;"><div class="usStatNum" id="ytActive" style="color:#4caf50;">-</div><div class="usStatLbl">Active</div></div>
+        <div class="usStat" style="border-color:#ff9800;"><div class="usStatNum" id="ytQueued" style="color:#ff9800;">-</div><div class="usStatLbl">Queued</div></div>
+        <div class="usStat" style="border-color:#e5544f;"><div class="usStatNum" id="ytDead" style="color:#e5544f;">-</div><div class="usStatLbl">Dead</div></div>
+    </div>
+
+    <div class="usCard">
+        <h3>Add New Link</h3>
+        <div class="usField"><label class="usLabel">URL</label><input id="ytUrl" type="text" is="emby-input" placeholder="https://www.youtube.com/watch?v=..." /></div>
+        <div class="usField"><label class="usLabel">Title <span class="usMuted">(optional — auto-detected if blank)</span></label><input id="ytTitle" type="text" is="emby-input" placeholder="Leave blank to auto-detect" /></div>
+        <div class="usField"><label class="usLabel">Save Folder</label><input id="ytPath" type="text" is="emby-input" placeholder="/mnt/media/Streams" /></div>
+        <div class="usField"><label class="usLabel">Format <span class="usMuted">(optional)</span></label><input id="ytFormat" type="text" is="emby-input" value="best" /></div>
+        <div style="margin-top:16px;">
+            <button type="button" is="emby-button" class="usBtn usBtnPrimary" id="ytAddBtn">✓ Add Link</button>
+            <button type="button" is="emby-button" class="usBtn" id="ytRefreshAllBtn" style="margin-left:8px;">⟲ Refresh All Now</button>
+        </div>
+        <div id="ytMsg" class="usMsg" style="display:none;"></div>
+    </div>
+
+    <div class="usCard" style="margin-top:20px;">
+        <h3>Links</h3>
+        <div id="ytLinksContainer"><span class="usMuted">Loading…</span></div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 3 — Custom Iframe
+═══════════════════════════════════════════════ -->
+<div class="usPanel" id="panel-iframe" style="display:none;">
+    <div class="usCard">
+        <p class="usMuted" style="margin:0 0 16px;">
+            Map Jellyfin item IDs to external iframe embed URLs. The <strong>globalIntercept.js</strong>
+            file (injected by your JS-injector plugin) reads this list from
+            <code>/UltimateStrm/iframe/mappings</code> and opens the iframe overlay instead of the
+            standard player whenever a mapped item is played.
+        </p>
+        <table class="usTable">
+            <thead><tr><th>Jellyfin Item ID</th><th>Iframe Embed URL</th><th></th></tr></thead>
+            <tbody id="iframeTbody"></tbody>
+        </table>
+        <div id="iframeEmpty" class="usEmpty" style="display:none;">No mappings yet.</div>
+    </div>
+
+    <div class="usCard" style="margin-top:20px;">
+        <h3>Add Mapping</h3>
+        <div class="usField"><label class="usLabel">Jellyfin Item ID</label><input id="iframeJfId" type="text" is="emby-input" placeholder="e.g. a901a772-9d85-fb91-82f4-d5980d8f3007" /></div>
+        <div class="usField"><label class="usLabel">Iframe Embed URL</label><input id="iframeUrl" type="url" is="emby-input" placeholder="https://example.com/embed/xyz" /></div>
+        <div style="margin-top:16px;">
+            <button type="button" is="emby-button" class="usBtn usBtnPrimary" id="iframeAddBtn">Add Mapping</button>
+        </div>
+        <div id="iframeMsg" class="usMsg" style="display:none;"></div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 4 — Quick STRM
+═══════════════════════════════════════════════ -->
+<div class="usPanel" id="panel-quick" style="display:none;">
+    <div class="usCard">
+        <h3>Quick STRM Creator</h3>
+        <p class="usMuted">Creates a blank .strm file on disk instantly — no database entry. Useful for creating placeholder files you'll fill in manually later.</p>
+
+        <div id="quickRowsContainer"></div>
+        <div style="margin:12px 0;">
+            <button type="button" is="emby-button" class="usBtn" id="quickAddRowBtn">+ Add Another Row</button>
+        </div>
+        <div style="margin-top:8px;">
+            <button type="button" is="emby-button" class="usBtn usBtnPrimary" id="quickCreateBtn">Create File(s)</button>
+        </div>
+        <div id="quickMsg" class="usMsg" style="display:none;"></div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 5 — Activity Log
+═══════════════════════════════════════════════ -->
+<div class="usPanel" id="panel-log" style="display:none;">
+    <div class="usCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <h3 style="margin:0;">Combined Activity Log</h3>
+            <button type="button" is="emby-button" class="usBtn" id="logClearBtn" style="font-size:11px;padding:5px 10px;">Clear Display</button>
+        </div>
+        <div id="logContainer" style="background:rgba(0,0,0,0.4);padding:14px;border-radius:4px;border:1px solid rgba(255,255,255,0.08);max-height:500px;overflow-y:auto;font-family:'Courier New',monospace;font-size:12px;line-height:1.7;"></div>
+    </div>
+</div>
+
+</div><!-- content-primary -->
+</div><!-- data-role=content -->
+
+<!-- ══════════════════════════════════════════
+     STYLES
+═══════════════════════════════════════════════ -->
+<style>
+#UltimateStrmConfigPage { font-size:14px; }
+.usPageTitle { font-size:26px; font-weight:600; margin:0 0 6px; color:#fff; }
+.usDescription { color:#999; margin:0 0 24px; font-size:13px; }
+
+/* Tab bar */
+.usTabBar { display:flex; flex-wrap:wrap; gap:4px; border-bottom:2px solid rgba(255,255,255,0.1); margin-bottom:24px; }
+.usTab { background:none; border:none; border-bottom:2px solid transparent; color:#999; padding:10px 18px; cursor:pointer; font-size:13px; font-weight:500; margin-bottom:-2px; transition:color .15s,border-color .15s; }
+.usTab:hover { color:#fff; }
+.usTab.active { color:#00a4dc; border-bottom-color:#00a4dc; }
+
+/* Cards */
+.usCard { background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:20px; }
+.usCard h3 { font-size:15px; font-weight:500; color:#fff; margin:0 0 16px; }
+
+/* Stat boxes */
+.usStat { background:rgba(255,255,255,0.03); border-left:4px solid; padding:14px 16px; border-radius:4px; }
+.usStatNum { font-size:28px; font-weight:600; }
+.usStatLbl { font-size:11px; color:#999; margin-top:4px; text-transform:uppercase; letter-spacing:.5px; }
+
+/* Fields */
+.usField { margin-bottom:16px; }
+.usLabel { display:block; margin-bottom:6px; color:#ccc; font-size:12px; font-weight:500; }
+.usField [is="emby-input"] { background:rgba(255,255,255,0.08) !important; border:1px solid rgba(255,255,255,0.15) !important; color:#fff !important; padding:9px 12px !important; border-radius:4px !important; font-size:13px !important; width:100%; box-sizing:border-box; }
+.usField [is="emby-input"]:focus { background:rgba(0,164,220,0.12) !important; border-color:#00a4dc !important; outline:none !important; }
+.usField [is="emby-input"]::placeholder { color:#555 !important; }
+
+/* Buttons */
+.usBtn { background:rgba(255,255,255,0.1) !important; color:#ddd !important; border:1px solid rgba(255,255,255,0.15) !important; padding:9px 16px !important; border-radius:4px !important; font-size:12px !important; font-weight:500 !important; cursor:pointer !important; }
+.usBtn:hover { background:rgba(255,255,255,0.18) !important; }
+.usBtnPrimary { background:#00a4dc !important; color:#fff !important; border-color:#00a4dc !important; }
+.usBtnPrimary:hover { background:#027ba8 !important; }
+.usBtnDanger { background:rgba(229,84,79,0.8) !important; color:#fff !important; border-color:#e5544f !important; }
+.usBtnSm { padding:5px 10px !important; font-size:11px !important; }
+
+/* Tables */
+.usTable { width:100%; border-collapse:collapse; }
+.usTable th { padding:10px 12px; text-align:left; border-bottom:2px solid rgba(255,255,255,0.1); color:#aaa; font-size:11px; text-transform:uppercase; letter-spacing:.5px; font-weight:500; }
+.usTable td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.05); color:#ddd; font-size:13px; }
+.usTable tr:hover td { background:rgba(0,164,220,0.04); }
+
+/* Misc */
+.usMuted { color:#888; font-size:12px; }
+.usEmpty { text-align:center; padding:24px; color:#666; font-size:13px; }
+.usMsg { margin-top:14px; padding:10px 14px; border-radius:4px; font-size:13px; }
+.usRowBox { padding:14px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.09); border-radius:5px; background:rgba(0,0,0,0.2); }
+</style>
+
+<!-- ══════════════════════════════════════════
+     SCRIPT
+═══════════════════════════════════════════════ -->
+<script>
+(function () {
+    var API = '/UltimateStrm';
+
+    /* ── helpers ── */
+    function esc(v) {
+        return String(v || '').replace(/[&<>"']/g, function(c) {
+            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+        });
+    }
+    function showMsg(el, text, ok) {
+        el.textContent = text;
+        el.style.background = ok ? 'rgba(76,175,80,0.15)' : 'rgba(229,84,79,0.15)';
+        el.style.color = ok ? '#4caf50' : '#e5544f';
+        el.style.display = 'block';
+        if (ok) { setTimeout(function(){ el.style.display='none'; }, 6000); }
+    }
+    function apiFetch(path, opts) {
+        opts = opts || {};
+        opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers || {});
+        return fetch(path, opts).then(function(r) {
+            if (!r.ok) {
+                return r.json().then(function(b){ throw new Error(b.error || 'HTTP ' + r.status); })
+                       .catch(function(){ throw new Error('HTTP ' + r.status); });
+            }
+            return r.status === 204 ? null : r.json();
+        });
+    }
+
+    /* ═══════════════════ TABS ═══════════════════ */
+    var tabs = document.querySelectorAll('#UltimateStrmConfigPage .usTab');
+    var panels = document.querySelectorAll('#UltimateStrmConfigPage .usPanel');
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            tabs.forEach(function(t){ t.classList.remove('active'); });
+            panels.forEach(function(p){ p.style.display='none'; });
+            tab.classList.add('active');
+            document.getElementById('panel-' + tab.dataset.tab).style.display = 'block';
+            if (tab.dataset.tab === 'log') { loadLog(); }
+        });
+    });
+
+    /* ═══════════════════ TAB 1 — STRM MANAGER ═══════════════════ */
+    var strmEditId = null;
+    var strmRowCtr = 0;
+
+    function strmMakeRow(title, folder, url) {
+        strmRowCtr++;
+        var id = strmRowCtr;
+        var d = document.createElement('div');
+        d.className = 'usRowBox';
+        d.dataset.rowId = id;
+        d.innerHTML =
+            '<div class="usField"><label class="usLabel">Title</label>' +
+            '<input type="text" is="emby-input" class="srTitle" value="' + esc(title||'') + '" placeholder="My Movie" /></div>' +
+            '<div class="usField"><label class="usLabel">Folder Path</label>' +
+            '<input type="text" is="emby-input" class="srFolder" value="' + esc(folder||'') + '" placeholder="/mnt/media/Movies/My Movie" /></div>' +
+            '<div class="usField"><label class="usLabel">Content URL</label>' +
+            '<input type="text" is="emby-input" class="srUrl" value="' + esc(url||'') + '" placeholder="https://..." /></div>' +
+            '<button type="button" is="emby-button" class="usBtn usBtnDanger usBtnSm srRemove" style="display:none;">Remove Row</button>';
+        d.querySelector('.srRemove').addEventListener('click', function() {
+            d.remove();
+            strmUpdateRemove();
+        });
+        return d;
+    }
+    function strmUpdateRemove() {
+        var rows = document.querySelectorAll('#strmRowsContainer .usRowBox');
+        rows.forEach(function(r){ r.querySelector('.srRemove').style.display = rows.length > 1 ? '' : 'none'; });
+    }
+    function strmAddRow(t, f, u) {
+        var row = strmMakeRow(t, f, u);
+        document.getElementById('strmRowsContainer').appendChild(row);
+        strmUpdateRemove();
+    }
+    function strmReset() {
+        strmEditId = null;
+        document.getElementById('strmRowsContainer').innerHTML = '';
+        strmAddRow();
+        document.getElementById('strmSaveBtn').textContent = 'Save';
+        document.getElementById('strmCancelBtn').style.display = 'none';
+        document.getElementById('strmAddRowBtn').style.display = '';
+        document.getElementById('strmMsg').style.display = 'none';
+    }
+    function strmLoad() {
+        apiFetch(API + '/strm/entries').then(function(entries) {
+            var tbody = document.getElementById('strmTbody');
+            var empty = document.getElementById('strmEmpty');
+            tbody.innerHTML = '';
+            if (!entries || !entries.length) { empty.style.display = 'block'; return; }
+            empty.style.display = 'none';
+            entries.forEach(function(e) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + esc(e.Title||e.title) + '</td>' +
+                    '<td style="font-size:12px;color:#aaa;">' + esc(e.FilePath||e.filePath) + '</td>' +
+                    '<td style="font-size:12px;color:#aaa;">' + esc(e.ContentUrl||e.contentUrl) + '</td>' +
+                    '<td style="white-space:nowrap;">' +
+                    '<button type="button" is="emby-button" class="usBtn usBtnSm" style="margin-right:4px;">Edit</button>' +
+                    '<button type="button" is="emby-button" class="usBtn usBtnDanger usBtnSm">Delete</button>' +
+                    '</td>';
+                tr.querySelectorAll('button')[0].addEventListener('click', function() {
+                    strmEditId = e.Id || e.id;
+                    document.getElementById('strmRowsContainer').innerHTML = '';
+                    strmAddRow(e.Title||e.title, e.FolderPath||e.folderPath, e.ContentUrl||e.contentUrl);
+                    document.getElementById('strmSaveBtn').textContent = 'Update';
+                    document.getElementById('strmCancelBtn').style.display = '';
+                    document.getElementById('strmAddRowBtn').style.display = 'none';
+                });
+                tr.querySelectorAll('button')[1].addEventListener('click', function() {
+                    if (!confirm('Delete "' + (e.Title||e.title) + '"?')) { return; }
+                    apiFetch(API + '/strm/entries/' + (e.Id||e.id), {method:'DELETE'}).then(strmLoad);
+                });
+                tbody.appendChild(tr);
+            });
+        });
+    }
+    document.getElementById('strmAddRowBtn').addEventListener('click', function() { strmAddRow(); });
+    document.getElementById('strmCancelBtn').addEventListener('click', strmReset);
+    document.getElementById('strmSaveBtn').addEventListener('click', function() {
+        var rows = [].slice.call(document.querySelectorAll('#strmRowsContainer .usRowBox'));
+        var payload = rows.map(function(r) {
+            return {
+                Title: r.querySelector('.srTitle').value.trim(),
+                FolderPath: r.querySelector('.srFolder').value.trim(),
+                ContentUrl: r.querySelector('.srUrl').value.trim()
+            };
+        });
+        var invalid = payload.some(function(p){ return !p.Title || !p.FolderPath || !p.ContentUrl; });
+        if (invalid) { showMsg(document.getElementById('strmMsg'), 'Title, Folder Path and Content URL are required for every row.', false); return; }
+
+        if (strmEditId) {
+            apiFetch(API + '/strm/entries/' + strmEditId, {method:'PUT', body:JSON.stringify(payload[0])})
+                .then(function(){ strmReset(); strmLoad(); })
+                .catch(function(e){ showMsg(document.getElementById('strmMsg'), e.message, false); });
+        } else {
+            apiFetch(API + '/strm/entries/batch', {method:'POST', body:JSON.stringify(payload)})
+                .then(function(res){
+                    strmReset();
+                    strmLoad();
+                    if (res && res.Errors && res.Errors.length) {
+                        var msg = res.Errors.map(function(e){ return (e.Title||'row'+(e.Index+1))+': '+e.Message; }).join('\n');
+                        showMsg(document.getElementById('strmMsg'), msg, false);
+                    }
+                })
+                .catch(function(e){ showMsg(document.getElementById('strmMsg'), e.message, false); });
+        }
+    });
+
+    /* ═══════════════════ TAB 2 — yt2strm ═══════════════════ */
+    function ytLoadStats() {
+        apiFetch(API + '/yt2strm/stats').then(function(s) {
+            document.getElementById('ytTotal').textContent = s.total;
+            document.getElementById('ytActive').textContent = s.active;
+            document.getElementById('ytQueued').textContent = s.queued;
+            document.getElementById('ytDead').textContent = s.dead;
+        }).catch(function(){});
+    }
+
+    function normalizeLink(l) {
+        return {
+            id:            l.Id            || l.id,
+            title:         l.Title         || l.title         || null,
+            url:           l.Url           || l.url           || '',
+            savePath:      l.SavePath      || l.savePath      || '',
+            format:        l.Format        || l.format        || 'best',
+            enabled:       l.Enabled       !== undefined ? l.Enabled : l.enabled,
+            resolvedTitle: l.ResolvedTitle || l.resolvedTitle || null,
+            status:        (l.Status       || l.status        || 'queued').toString().toLowerCase(),
+            strmPath:      l.StrmPath      || l.strmPath      || null,
+            lastError:     l.LastError     || l.lastError     || null,
+            lastChecked:   l.LastChecked   || l.lastChecked   || null
+        };
+    }
+
+    function ytLoadLinks() {
+        apiFetch(API + '/yt2strm/links').then(function(links) {
+            var el = document.getElementById('ytLinksContainer');
+            if (!links || !links.length) {
+                el.innerHTML = '<p class="usMuted" style="margin:0;">No links added yet.</p>';
+                return;
+            }
+            var html = '<table class="usTable"><thead><tr>' +
+                '<th>Status</th><th>Title</th><th>URL</th><th>Folder</th><th>Last Checked</th><th></th>' +
+                '</tr></thead><tbody>';
+            links.forEach(function(raw) {
+                var l = normalizeLink(raw);
+                var col = l.status==='active' ? '#4caf50' : l.status==='dead' ? '#e5544f' : '#ff9800';
+                var displayTitle = l.resolvedTitle || l.title || '(untitled)';
+                var lc = l.lastChecked ? new Date(l.lastChecked).toLocaleString() : 'never';
+                var shortUrl  = l.url.length > 40 ? l.url.slice(0,40)+'…' : l.url;
+                var shortPath = l.savePath.length > 32 ? l.savePath.slice(0,32)+'…' : l.savePath;
+                html += '<tr>' +
+                    '<td><strong style="color:'+col+';">'+esc(l.status)+'</strong></td>' +
+                    '<td>'+esc(displayTitle)+'</td>' +
+                    '<td style="font-size:11px;color:#888;" title="'+esc(l.url)+'">'+esc(shortUrl)+'</td>' +
+                    '<td style="font-size:11px;color:#888;" title="'+esc(l.savePath)+'">'+esc(shortPath)+'</td>' +
+                    '<td style="font-size:11px;color:#888;">'+esc(lc)+'</td>' +
+                    '<td style="white-space:nowrap;">' +
+                    '<button type="button" is="emby-button" class="usBtn usBtnSm" onclick="us_ytRefresh('+l.id+')" style="margin-right:3px;">Refresh</button>' +
+                    '<button type="button" is="emby-button" class="usBtn usBtnDanger usBtnSm" onclick="us_ytDelete('+l.id+')">Delete</button>' +
+                    '</td></tr>';
+                if (l.lastError) {
+                    html += '<tr><td colspan="6" style="padding:4px 12px 10px;font-size:11px;color:#e5544f;">⚠ '+esc(l.lastError)+'</td></tr>';
+                }
+            });
+            html += '</tbody></table>';
+            el.innerHTML = html;
+        }).catch(function(){
+            document.getElementById('ytLinksContainer').innerHTML = '<p style="color:#e5544f;">Error loading links.</p>';
+        });
+    }
+
+    window.us_ytRefresh = function(id) {
+        apiFetch(API + '/yt2strm/links/'+id+'/refresh', {method:'POST'})
+            .then(function(){ ytLoadLinks(); ytLoadStats(); })
+            .catch(function(e){ alert(e.message); });
+    };
+    window.us_ytDelete = function(id) {
+        if (!confirm('Delete this link and its .strm file?')) { return; }
+        apiFetch(API + '/yt2strm/links/'+id, {method:'DELETE'})
+            .then(function(){ ytLoadLinks(); ytLoadStats(); })
+            .catch(function(e){ alert(e.message); });
+    };
+
+    document.getElementById('ytAddBtn').addEventListener('click', function() {
+        var url    = document.getElementById('ytUrl').value.trim();
+        var title  = document.getElementById('ytTitle').value.trim();
+        var path   = document.getElementById('ytPath').value.trim();
+        var format = document.getElementById('ytFormat').value.trim() || 'best';
+        var msg    = document.getElementById('ytMsg');
+        if (!url || !path) { showMsg(msg, 'URL and Save Folder are required.', false); return; }
+        apiFetch(API + '/yt2strm/links', {
+            method:'POST',
+            body:JSON.stringify({url:url, title:title||null, savePath:path, format:format})
+        }).then(function(){
+            document.getElementById('ytUrl').value = '';
+            document.getElementById('ytTitle').value = '';
+            document.getElementById('ytPath').value = '';
+            document.getElementById('ytFormat').value = 'best';
+            showMsg(msg, '✓ Link added and queued for resolution', true);
+            ytLoadLinks(); ytLoadStats();
+        }).catch(function(e){ showMsg(msg, e.message, false); });
+    });
+
+    document.getElementById('ytRefreshAllBtn').addEventListener('click', function() {
+        apiFetch(API + '/yt2strm/refresh-all', {method:'POST'})
+            .then(function(){
+                showMsg(document.getElementById('ytMsg'), '✓ All links queued for refresh', true);
+                ytLoadLinks(); ytLoadStats();
+            })
+            .catch(function(e){ showMsg(document.getElementById('ytMsg'), e.message, false); });
+    });
+
+    /* ═══════════════════ TAB 3 — CUSTOM IFRAME ═══════════════════ */
+    function iframeLoad() {
+        apiFetch(API + '/iframe/mappings').then(function(list) {
+            var tbody = document.getElementById('iframeTbody');
+            var empty = document.getElementById('iframeEmpty');
+            tbody.innerHTML = '';
+            if (!list || !list.length) { empty.style.display='block'; return; }
+            empty.style.display='none';
+            list.forEach(function(m) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td style="font-size:12px;">'+esc(m.JellyfinId||m.jellyfinId)+'</td>' +
+                    '<td style="font-size:12px;">'+esc(m.EmbedUrl||m.embedUrl)+'</td>' +
+                    '<td><button type="button" is="emby-button" class="usBtn usBtnDanger usBtnSm">Delete</button></td>';
+                tr.querySelector('button').addEventListener('click', function() {
+                    if (!confirm('Delete this mapping?')) { return; }
+                    apiFetch(API + '/iframe/mappings/' + (m.Id||m.id), {method:'DELETE'}).then(iframeLoad);
+                });
+                tbody.appendChild(tr);
+            });
+        });
+    }
+    document.getElementById('iframeAddBtn').addEventListener('click', function() {
+        var jfid = document.getElementById('iframeJfId').value.trim();
+        var url  = document.getElementById('iframeUrl').value.trim();
+        var msg  = document.getElementById('iframeMsg');
+        if (!jfid || !url) { showMsg(msg, 'Both fields are required.', false); return; }
+        apiFetch(API + '/iframe/mappings', {method:'POST', body:JSON.stringify({JellyfinId:jfid, EmbedUrl:url})})
+            .then(function(){
+                document.getElementById('iframeJfId').value = '';
+                document.getElementById('iframeUrl').value  = '';
+                showMsg(msg, '✓ Mapping saved', true);
+                iframeLoad();
+            })
+            .catch(function(e){ showMsg(msg, e.message, false); });
+    });
+
+    /* ═══════════════════ TAB 4 — QUICK STRM ═══════════════════ */
+    var quickRowCtr = 0;
+    function quickMakeRow() {
+        quickRowCtr++;
+        var d = document.createElement('div');
+        d.className = 'usRowBox';
+        d.innerHTML =
+            '<div class="usField"><label class="usLabel">Title (becomes filename)</label>' +
+            '<input type="text" is="emby-input" class="qrTitle" placeholder="My Movie" /></div>' +
+            '<div class="usField"><label class="usLabel">Folder Path</label>' +
+            '<input type="text" is="emby-input" class="qrFolder" placeholder="/mnt/media/Movies/My Movie" /></div>' +
+            '<button type="button" is="emby-button" class="usBtn usBtnDanger usBtnSm qrRemove" style="display:none;">Remove Row</button>';
+        d.querySelector('.qrRemove').addEventListener('click', function() {
+            d.remove();
+            quickUpdateRemove();
+        });
+        return d;
+    }
+    function quickUpdateRemove() {
+        var rows = document.querySelectorAll('#quickRowsContainer .usRowBox');
+        rows.forEach(function(r){ r.querySelector('.qrRemove').style.display = rows.length > 1 ? '' : 'none'; });
+    }
+    function quickAddRow() {
+        document.getElementById('quickRowsContainer').appendChild(quickMakeRow());
+        quickUpdateRemove();
+    }
+    document.getElementById('quickAddRowBtn').addEventListener('click', quickAddRow);
+    document.getElementById('quickCreateBtn').addEventListener('click', function() {
+        var rows = [].slice.call(document.querySelectorAll('#quickRowsContainer .usRowBox'));
+        var payload = rows.map(function(r){
+            return { Title: r.querySelector('.qrTitle').value.trim(), FolderPath: r.querySelector('.qrFolder').value.trim() };
+        });
+        var invalid = payload.some(function(p){ return !p.Title || !p.FolderPath; });
+        var msg = document.getElementById('quickMsg');
+        if (invalid) { showMsg(msg, 'Title and Folder Path are required for every row.', false); return; }
+        var promises = payload.map(function(p) {
+            return apiFetch(API + '/quickstrm/create', {method:'POST', body:JSON.stringify(p)});
+        });
+        Promise.allSettled(promises).then(function(results) {
+            var ok   = results.filter(function(r){ return r.status==='fulfilled'; }).length;
+            var fail = results.filter(function(r){ return r.status==='rejected'; });
+            var text = ok + ' file(s) created.';
+            if (fail.length) { text += ' ' + fail.length + ' failed: ' + fail.map(function(f){ return f.reason && f.reason.message ? f.reason.message : 'unknown'; }).join('; '); }
+            showMsg(msg, text, fail.length === 0);
+            if (ok > 0) { document.getElementById('quickRowsContainer').innerHTML = ''; quickAddRow(); }
+        });
+    });
+
+    /* ═══════════════════ TAB 5 — ACTIVITY LOG ═══════════════════ */
+    function loadLog() {
+        apiFetch(API + '/yt2strm/activity').then(function(logs) {
+            var el = document.getElementById('logContainer');
+            if (!logs || !logs.length) { el.innerHTML = '<span style="color:#666;">No activity yet.</span>'; return; }
+            var html = '';
+            logs.slice(-100).reverse().forEach(function(l) {
+                var lvl = (l.level||l.Level||'info').toLowerCase();
+                var col = lvl==='success' ? '#4caf50' : lvl==='error' ? '#e5544f' : '#00a4dc';
+                var t = l.time||l.Time;
+                var ts = t ? new Date(t).toLocaleTimeString() : '';
+                html += '<div style="color:'+col+';padding:1px 0;">'+esc(ts)+' ['+lvl.toUpperCase()+'] '+esc(l.message||l.Message||'')+'</div>';
+            });
+            el.innerHTML = html;
+        }).catch(function(){ document.getElementById('logContainer').innerHTML = '<span style="color:#e5544f;">Error loading log.</span>'; });
+    }
+    document.getElementById('logClearBtn').addEventListener('click', function() {
+        document.getElementById('logContainer').innerHTML = '<span style="color:#666;">Display cleared (server log unchanged).</span>';
+    });
+
+    /* ═══════════════════ INIT ═══════════════════ */
+    function init() {
+        strmReset();
+        strmLoad();
+        quickAddRow();
+        iframeLoad();
+        ytLoadStats();
+        ytLoadLinks();
+        loadLog();
+    }
+
+    document.getElementById('UltimateStrmConfigPage').addEventListener('pageshow', init);
+    init();
+
+    /* Auto-refresh every 5s for active tab */
+    setInterval(function() {
+        var activeTab = document.querySelector('#UltimateStrmConfigPage .usTab.active');
+        if (!activeTab) { return; }
+        var t = activeTab.dataset.tab;
+        if (t === 'yt2strm') { ytLoadLinks(); ytLoadStats(); }
+        if (t === 'log')     { loadLog(); }
+    }, 5000);
+
+})();
+</script>
+
+</div>
