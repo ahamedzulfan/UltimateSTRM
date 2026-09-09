@@ -22,7 +22,7 @@ public class YtDlpResolver
     public (string title, string error) FetchTitle(string url)
     {
         var args = string.Format(CultureInfo.InvariantCulture,
-            "--js-runtimes node --print \"%(title).200B\" --skip-download \"{0}\"", url);
+            "--print \"%(title).200B\" --skip-download \"{0}\"", url);
         var (stdout, stderr) = RunYtDlp(args);
         if (!string.IsNullOrEmpty(stdout))
         {
@@ -39,39 +39,32 @@ public class YtDlpResolver
     /// <summary>Resolve the direct stream URL using yt-dlp -g (and optionally -f).</summary>
     public (string streamUrl, string error) ResolveUrl(string url, string format)
     {
-        // Enforce progressive formats containing both video and audio in a single URL
-        format = string.IsNullOrWhiteSpace(format) 
-            ? "best" 
-            : format;
-
+        format = string.IsNullOrWhiteSpace(format) ? "best" : format;
         var args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"{0}\" -g \"{1}\"", format, url);
         var (stdout, stderr) = RunYtDlp(args);
 
         if (!string.IsNullOrEmpty(stdout))
         {
-            var lines = stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+            var lines = stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
                 .Where(l => !string.IsNullOrWhiteSpace(l))
                 .ToList();
-
             if (lines.Count > 0)
             {
-                // Returns only the single URL representing combined video and audio
-                return (lines[0].Trim(), null);
+                return (string.Join("\n", lines), null);
             }
         }
 
-        // Fallback retry using combined progressive stream codes
-        args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"b\" -g \"{0}\"", url);
+        // Some extractors don't support -f at all; retry without it.
+        args = string.Format(CultureInfo.InvariantCulture, "-g \"{0}\"", url);
         (stdout, stderr) = RunYtDlp(args);
         if (!string.IsNullOrEmpty(stdout))
         {
-            var lines = stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+            var lines = stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
                 .Where(l => !string.IsNullOrWhiteSpace(l))
                 .ToList();
-
             if (lines.Count > 0)
             {
-                return (lines[0].Trim(), null);
+                return (string.Join("\n", lines), null);
             }
         }
 
