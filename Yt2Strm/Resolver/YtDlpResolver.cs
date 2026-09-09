@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -23,7 +22,7 @@ public class YtDlpResolver
     public (string title, string error) FetchTitle(string url)
     {
         var args = string.Format(CultureInfo.InvariantCulture,
-            "--print \"%(title).200B\" --skip-download \"{0}\"", url);
+            "--js-runtimes node --print \"%(title).200B\" --skip-download \"{0}\"", url);
         var (stdout, stderr) = RunYtDlp(args);
         if (!string.IsNullOrEmpty(stdout))
         {
@@ -37,77 +36,46 @@ public class YtDlpResolver
         return (null, stderr ?? "yt-dlp returned no output");
     }
 
-    /// <summary>
-    /// Resolve a single direct stream URL that has BOTH audio and video muxed together.
-    /// This is required because .strm files can only reference one URL, and Jellyfin
-    /// cannot merge separate audio-only/video-only DASH streams the way a local
-    /// download + ffmpeg merge would.
-    /// </summary>
+    /// <summary>Resolve the direct stream URL using yt-dlp -g (and optionally -f).</summary>
     public (string streamUrl, string error) ResolveUrl(string url, string format)
     {
-        // Selector priority:
-        // 1. Best progressive mp4 with both audio+video present
-        // 2. Best of any container with both audio+video present
-        // 3. Best HLS (m3u8) stream - single URL, ffmpeg can play these with sync'd audio
-        // 4. itag 18 - the near-universal legacy 360p muxed fallback
-        var effectiveFormat = string.IsNullOrWhiteSpace(format)
-            ? "best[ext=mp4][vcodec!=none][acodec!=none]/best[vcodec!=none][acodec!=none]/best[protocol*=m3u8]/18"
+        // Enforce progressive formats containing both video and audio in a single URL
+        format = string.IsNullOrWhiteSpace(format) 
+            ? "best" 
             : format;
 
-        var (streamUrl, error) = TryResolve(url, effectiveFormat);
-        if (streamUrl != null)
-        {
-            return (streamUrl, null);
-        }
+        var args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"{0}\" -g \"{1}\"", format, url);
+        var (stdout, stderr) = RunYtDlp(args);
 
-        // If the caller passed a custom format and it failed, fall back to our
-        // safe default chain rather than giving up immediately.
-        if (!string.IsNullOrWhiteSpace(format))
+        if (!string.IsNullOrEmpty(stdout))
         {
-            (streamUrl, error) = TryResolve(url,
-                "best[ext=mp4][vcodec!=none][acodec!=none]/best[vcodec!=none][acodec!=none]/best[protocol*=m3u8]/18");
-            if (streamUrl != null)
+            var lines = stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .ToList();
+
+            if (lines.Count > 0)
             {
-                return (streamUrl, null);
+                // Returns only the single URL representing combined video and audio
+                return (lines[0].Trim(), null);
             }
         }
 
-        return (null, error ?? "yt-dlp could not resolve a muxed audio+video stream for this URL.");
-    }
-
-    private (string streamUrl, string error) TryResolve(string url, string format)
-    {
-        var args = string.Format(CultureInfo.InvariantCulture, "-f \"{0}\" -g \"{1}\"", format, url);
-        var (stdout, stderr) = RunYtDlp(args);
-        var lines = ParseUrlLines(stdout);
-
-        if (lines.Count == 1)
+        // Fallback retry using combined progressive stream codes
+        args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"best\" -g \"{0}\"", url);
+        (stdout, stderr) = RunYtDlp(args);
+        if (!string.IsNullOrEmpty(stdout))
         {
-            return (lines[0], null);
+            var lines = stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .ToList();
+
+            if (lines.Count > 0)
+            {
+                return (lines[0].Trim(), null);
+            }
         }
 
-        if (lines.Count > 1)
-        {
-            // yt-dlp gave us separate video/audio URLs (DASH split). A .strm file
-            // can't play these together, so treat this as a failure and let the
-            // caller fall back to a safer format rather than silently returning
-            // a video-only (or audio-only) link.
-            return (null, "yt-dlp returned multiple separate streams (split audio/video) - no single muxed URL available for this format.");
-        }
-
-        return (null, stderr);
-    }
-
-    private static List<string> ParseUrlLines(string stdout)
-    {
-        if (string.IsNullOrEmpty(stdout))
-        {
-            return new List<string>();
-        }
-
-        return stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
-            .Where(l => !string.IsNullOrWhiteSpace(l))
-            .ToList();
+        return (null, stderr ?? "yt-dlp returned no output");
     }
 
     private (string stdout, string stderr) RunYtDlp(string args)
