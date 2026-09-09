@@ -36,11 +36,12 @@ public class YtDlpResolver
         return (null, stderr ?? "yt-dlp returned no output");
     }
 
-    /// <summary>Resolve the direct stream URL using yt-dlp -g (and optionally -f).</summary>
+    /// <summary>Resolve the direct stream URL, prioritizing MP4 formats before falling back.</summary>
     public (string streamUrl, string error) ResolveUrl(string url, string format)
     {
-        format = string.IsNullOrWhiteSpace(format) ? "mp4" : format;
-        var args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"{0}\" -g \"{1}\"", format, url);
+        // 1. Try resolving strictly for MP4 first
+        var mp4FormatSelector = "b[ext=mp4]/best[ext=mp4]/mp4";
+        var args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"{0}\" -g \"{1}\"", mp4FormatSelector, url);
         var (stdout, stderr) = RunYtDlp(args);
 
         if (!string.IsNullOrEmpty(stdout))
@@ -54,9 +55,26 @@ public class YtDlpResolver
             }
         }
 
-        // Some extractors don't support -f at all; retry without it.
+        // 2. Fallback attempt with requested/default format flag
+        var fallbackFormat = string.IsNullOrWhiteSpace(format) ? "b/best" : format;
+        args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"{0}\" -g \"{1}\"", fallbackFormat, url);
+        (stdout, stderr) = RunYtDlp(args);
+
+        if (!string.IsNullOrEmpty(stdout))
+        {
+            var lines = stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .ToList();
+            if (lines.Count > 0)
+            {
+                return (string.Join("\n", lines), null);
+            }
+        }
+
+        // 3. Final fallback: retry without -f flag for extractors that don't support format filters
         args = string.Format(CultureInfo.InvariantCulture, "-g \"{0}\"", url);
         (stdout, stderr) = RunYtDlp(args);
+
         if (!string.IsNullOrEmpty(stdout))
         {
             var lines = stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
