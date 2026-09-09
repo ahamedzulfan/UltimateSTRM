@@ -28,7 +28,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     }
 
     /// <inheritdoc />
-    public override string Name => "Ultimate STRM";
+    public override string Name => "UltimateSTRM";
 
     /// <inheritdoc />
     public override Guid Id => Guid.Parse("f029e2b3-8dc0-47de-a13d-4df77020485a");

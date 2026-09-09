@@ -39,7 +39,7 @@ public class YtDlpResolver
     /// <summary>Resolve the direct stream URL using yt-dlp -g (and optionally -f).</summary>
     public (string streamUrl, string error) ResolveUrl(string url, string format)
     {
-        format = string.IsNullOrWhiteSpace(format) ? "best" : format;
+        format = string.IsNullOrWhiteSpace(format) ? "best[ext=mp4]/b/best" : format;
         var args = string.Format(CultureInfo.InvariantCulture, "-f \"{0}\" -g \"{1}\"", format, url);
         var (stdout, stderr) = RunYtDlp(args);
 
