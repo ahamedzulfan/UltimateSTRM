@@ -61,7 +61,7 @@ public class YtDlpResolver
         }
 
         // Fallback retry using combined progressive stream codes
-        args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"best\" -g \"{0}\"", url);
+        args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"b\" -g \"{0}\"", url);
         (stdout, stderr) = RunYtDlp(args);
         if (!string.IsNullOrEmpty(stdout))
         {
