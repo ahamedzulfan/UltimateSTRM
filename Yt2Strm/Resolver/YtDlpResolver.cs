@@ -55,37 +55,6 @@ public class YtDlpResolver
             }
         }
 
-        // 2. Fallback attempt with requested/default format flag
-        var fallbackFormat = string.IsNullOrWhiteSpace(format) ? "b/best" : format;
-        args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"{0}\" -g \"{1}\"", fallbackFormat, url);
-        (stdout, stderr) = RunYtDlp(args);
-
-        if (!string.IsNullOrEmpty(stdout))
-        {
-            var lines = stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
-                .Where(l => !string.IsNullOrWhiteSpace(l))
-                .ToList();
-            if (lines.Count > 0)
-            {
-                return (string.Join("\n", lines), null);
-            }
-        }
-
-        // 3. Final fallback: retry without -f flag for extractors that don't support format filters
-        args = string.Format(CultureInfo.InvariantCulture, "-g \"{0}\"", url);
-        (stdout, stderr) = RunYtDlp(args);
-
-        if (!string.IsNullOrEmpty(stdout))
-        {
-            var lines = stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
-                .Where(l => !string.IsNullOrWhiteSpace(l))
-                .ToList();
-            if (lines.Count > 0)
-            {
-                return (string.Join("\n", lines), null);
-            }
-        }
-
         return (null, stderr ?? "yt-dlp returned no output");
     }
 

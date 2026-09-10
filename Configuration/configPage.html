@@ -58,7 +58,7 @@
         <div class="usField"><label class="usLabel">URL</label><input id="ytUrl" type="text" is="emby-input" placeholder="https://www.youtube.com/watch?v=..." /></div>
         <div class="usField"><label class="usLabel">Title <span class="usMuted">(optional — auto-detected if blank)</span></label><input id="ytTitle" type="text" is="emby-input" placeholder="Leave blank to auto-detect" /></div>
         <div class="usField"><label class="usLabel">Save Folder</label><input id="ytPath" type="text" is="emby-input" placeholder="/mnt/media/Streams" /></div>
-        <div class="usField"><label class="usLabel">Format <span class="usMuted">(optional)</span></label><input id="ytFormat" type="text" is="emby-input" value="mp4" /></div>
+        <div class="usField"><label class="usLabel">Format <span class="usMuted">(optional)</span></label><input id="ytFormat" type="text" is="emby-input" value="b[ext=mp4]" /></div>
         <div style="margin-top:16px;">
             <button type="button" is="emby-button" class="usBtn usBtnPrimary" id="ytAddBtn">✓ Add Link</button>
             <button type="button" is="emby-button" class="usBtn" id="ytRefreshAllBtn" style="margin-left:8px;">⟲ Refresh All Now</button>
@@ -355,7 +355,7 @@
             title:         l.Title         || l.title         || null,
             url:           l.Url           || l.url           || '',
             savePath:      l.SavePath      || l.savePath      || '',
-            format:        l.Format        || l.format        || 'mp4',
+            format:        l.Format        || l.format        || 'b[ext=mp4]',
             enabled:       l.Enabled       !== undefined ? l.Enabled : l.enabled,
             resolvedTitle: l.ResolvedTitle || l.resolvedTitle || null,
             status:        (l.Status       || l.status        || 'queued').toString().toLowerCase(),
@@ -419,7 +419,7 @@
         var url    = document.getElementById('ytUrl').value.trim();
         var title  = document.getElementById('ytTitle').value.trim();
         var path   = document.getElementById('ytPath').value.trim();
-        var format = document.getElementById('ytFormat').value.trim() || 'mp4';
+        var format = document.getElementById('ytFormat').value.trim() || 'b[ext=mp4]';
         var msg    = document.getElementById('ytMsg');
         if (!url || !path) { showMsg(msg, 'URL and Save Folder are required.', false); return; }
         apiFetch(API + '/yt2strm/links', {
@@ -429,7 +429,7 @@
             document.getElementById('ytUrl').value = '';
             document.getElementById('ytTitle').value = '';
             document.getElementById('ytPath').value = '';
-            document.getElementById('ytFormat').value = 'mp4';
+            document.getElementById('ytFormat').value = 'b[ext=mp4]';
             showMsg(msg, '✓ Link added and queued for resolution', true);
             ytLoadLinks(); ytLoadStats();
         }).catch(function(e){ showMsg(msg, e.message, false); });
