@@ -41,7 +41,7 @@ public class YtDlpResolver
     {
         // 1. Try resolving strictly for MP4 first
         var mp4FormatSelector = "mp4";
-        var args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"{0}\" -g \"{1}\"", mp4FormatSelector, url);
+        var args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -g \"{1}\"", url);
         var (stdout, stderr) = RunYtDlp(args);
 
         if (!string.IsNullOrEmpty(stdout))
