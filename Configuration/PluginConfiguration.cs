@@ -15,7 +15,7 @@ public class PluginConfiguration : BasePluginConfiguration
     public PluginConfiguration()
     {
         YtDlpPath = "yt-dlp";
-        DefaultFormat = "b[ext=mp4]";
+        DefaultFormat = "mp4";
     }
 
     /// <summary>
