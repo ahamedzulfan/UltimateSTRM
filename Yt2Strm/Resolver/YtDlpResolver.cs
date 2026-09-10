@@ -39,9 +39,8 @@ public class YtDlpResolver
     /// <summary>Resolve the direct stream URL, prioritizing MP4 formats before falling back.</summary>
     public (string streamUrl, string error) ResolveUrl(string url, string format)
     {
-        // 1. Try resolving strictly for MP4 first
-        var mp4FormatSelector = "mp4";
-        var args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -g \"{0}\"", url);
+        var FormatSelector = "best/bestvideo+bestaudio";
+        var args = string.Format(CultureInfo.InvariantCulture, "--js-runtimes node -f \"{0}\" -g \"{1}\"", FormatSelector, url);
         var (stdout, stderr) = RunYtDlp(args);
 
         if (!string.IsNullOrEmpty(stdout))
